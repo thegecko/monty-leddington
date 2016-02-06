@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>monty-leddington</title>
+    <style>
+        button { font-size: 150px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <button id="connect" onclick="connect()">Connect</button>
+    <button id="switch" onclick="flipflop()" class="hidden">Switch</button>
+    <div id="results"></div>
+
+    <script>
+        var serviceUUID = "0000a000-0000-1000-8000-00805f9b34fb";
+        var controlUUID = "0000a001-0000-1000-8000-00805f9b34fb";
+
+        var connectEl = document.getElementById("connect");
+        var switchEl = document.getElementById("switch");
+        var resultsEl = document.getElementById("results");
+
+        function log(message) {
+            console.log(message);
+            resultsEl.innerText += message + "\n";
+        }
+
+        var ledChar = null;
+        function connect() {
+            navigator.bluetooth.requestDevice({
+                filters: [{ services: [0xA000] }],
+                optionalServices: [serviceUUID]
+            })
+            .then(device => device.connectGATT())
+            .then(server => server.getPrimaryService(serviceUUID))
+            .then(service => service.getCharacteristic(controlUUID))
+            .then(characteristic => {
+                ledChar = characteristic;
+                return ledChar.readValue();
+            })
+            .then(data => {
+                var value = data.getUint8(0);
+                switchEl.innerHTML = (value === 1) ? "Off" : " On";
+                connectEl.className = "hidden";
+                switchEl.className = "";
+            })
+            .catch(error => {
+                log(error);
+            });
+        }
+
+        function flipflop() {
+            var value = null;
+
+            if (ledChar) {
+                ledChar.readValue()
+                .then(data => {
+                    value = data.getUint8(0);
+                    value = (value === 1) ? 0 : 1;
+                    return ledChar.writeValue(new Uint8Array([value]));
+                })
+                .then(() => {
+                    switchEl.innerHTML = (value === 1) ? "Off" : " On";
+                })
+                .catch(error => {
+                    log(error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

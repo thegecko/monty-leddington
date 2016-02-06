@@ -1,0 +1,13 @@
+{
+  "name": "monty-leddington",
+  "version": "1.0.0",
+  "description": "[https://thegecko.github.io/monty-leddington](https://thegecko.github.io/monty-leddington)",
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thegecko/monty-leddington.git"
+  },
+  "devDependencies": {
+    "express": "^4.13.4"
+  }
+}
