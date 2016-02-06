@@ -3,13 +3,17 @@
 <head>
     <title>monty-leddington</title>
     <style>
-        button { font-size: 150px; }
+        button { font-size: 150px; display: block; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
     <button id="connect" onclick="connect()">Connect</button>
-    <button id="switch" onclick="flipflop()" class="hidden">Switch</button>
+    <div id="hidden" class="hidden">
+        <button onclick="change([0, 0, 100, 100])">Red</button>
+        <button onclick="change([0, 100, 0, 100])">Green</button>
+        <button onclick="change([100, 0, 0, 100])">Blue</button>
+    </div>
     <div id="results"></div>
 
     <script>
@@ -17,12 +21,12 @@
         var controlUUID = "0000a001-0000-1000-8000-00805f9b34fb";
 
         var connectEl = document.getElementById("connect");
-        var switchEl = document.getElementById("switch");
+        var hiddenEl = document.getElementById("hidden");
         var resultsEl = document.getElementById("results");
 
         function log(message) {
             console.log(message);
-            resultsEl.innerText += message + "\n";
+            //resultsEl.innerText += message + "\n";
         }
 
         var ledChar = null;
@@ -36,32 +40,17 @@
             .then(service => service.getCharacteristic(controlUUID))
             .then(characteristic => {
                 ledChar = characteristic;
-                return ledChar.readValue();
-            })
-            .then(data => {
-                var value = data.getUint8(0);
-                switchEl.innerHTML = (value === 1) ? "Off" : " On";
                 connectEl.className = "hidden";
-                switchEl.className = "";
+                hiddenEl.className = "";
             })
             .catch(error => {
                 log(error);
             });
         }
 
-        function flipflop() {
-            var value = null;
-
+        function change(value) {
             if (ledChar) {
-                ledChar.readValue()
-                .then(data => {
-                    value = data.getUint8(0);
-                    value = (value === 1) ? 0 : 1;
-                    return ledChar.writeValue(new Uint8Array([value]));
-                })
-                .then(() => {
-                    switchEl.innerHTML = (value === 1) ? "Off" : " On";
-                })
+                ledChar.writeValue(new Uint8Array(value))
                 .catch(error => {
                     log(error);
                 });
