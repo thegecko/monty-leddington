@@ -2,35 +2,32 @@
 <html>
 <head>
     <title>monty-leddington</title>
+    <link rel="import" href="bower_components/color-picker-element/dist/color-picker.html">
     <style>
         button { font-size: 150px; display: block; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
-    <button id="connect" onclick="connect()">Connect</button>
-    <div id="hidden" class="hidden">
-        <button onclick="change([0, 0, 100, 100])">Red</button>
-        <button onclick="change([0, 100, 0, 100])">Green</button>
-        <button onclick="change([100, 0, 0, 100])">Blue</button>
-    </div>
+    <color-picker class="hidden" width="800" height="800"></color-picker>
+    <button id="connect">Connect</button>
     <div id="results"></div>
 
     <script>
         var serviceUUID = "0000a000-0000-1000-8000-00805f9b34fb";
         var controlUUID = "0000a001-0000-1000-8000-00805f9b34fb";
 
+        var colorEl = document.querySelector('color-picker');
         var connectEl = document.getElementById("connect");
-        var hiddenEl = document.getElementById("hidden");
         var resultsEl = document.getElementById("results");
 
         function log(message) {
             console.log(message);
-            //resultsEl.innerText += message + "\n";
+            // resultsEl.innerText += message + "\n";
         }
 
         var ledChar = null;
-        function connect() {
+        connectEl.addEventListener('click', () => {
             navigator.bluetooth.requestDevice({
                 filters: [{ services: [0xA000] }],
                 optionalServices: [serviceUUID]
@@ -40,22 +37,23 @@
             .then(service => service.getCharacteristic(controlUUID))
             .then(characteristic => {
                 ledChar = characteristic;
+                colorEl.className = "";
                 connectEl.className = "hidden";
-                hiddenEl.className = "";
             })
             .catch(error => {
                 log(error);
             });
-        }
+        });
 
-        function change(value) {
+        colorEl.addEventListener('colorselected', e => {
             if (ledChar) {
-                ledChar.writeValue(new Uint8Array(value))
+                var rgb = e.detail.rgb;
+                ledChar.writeValue(new Uint8Array([rgb.b, rgb.g, rgb.r, 100]))
                 .catch(error => {
                     log(error);
                 });
             }
-        }
+        });
     </script>
 </body>
 </html>
