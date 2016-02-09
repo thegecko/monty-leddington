@@ -268,9 +268,6 @@ void EddystoneService::swapAdvertisedFrame(FrameType frameType)
     case NORMAL_FRAME:
         ble.gap().clearAdvertisingPayload();
         ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
-
-        printf("UUID16List length %d first one is %d\r\n", normalFrameUuid16ListLength, normalFrameUuid16List[0]);
-
         ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t *)normalFrameUuid16List, normalFrameUuid16ListLength);
         ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *)normalFrameName, normalFrameNameLength);
         ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);

@@ -31,8 +31,7 @@ WS2812 ws(P0_2, WS2812_BUF);
 // Eddystone URL
 static const char defaultUrl[] = "https://goo.gl/Vmoj51";
 // Normal name & services
-static char beaconName[] = "LED4";
-// static uint16_t uuid16_list[] = { 0x8765 };
+static char beaconName[] = "LED9";
 static uint16_t uuid16_list[] = { LEDService::LED_SERVICE_UUID };
 
 static const PowerLevels_t defaultAdvPowerLevels = {-47, -33, -21, -13};
@@ -104,6 +103,9 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params)
     eddyServicePtr->setNormalFrameAdvertisingInterval(500);
 
     eddyServicePtr->startBeaconService();
+
+    bool initialValueForLEDCharacteristic = false;
+    ledServicePtr = new LEDService(ble, initialValueForLEDCharacteristic);
 }
 
 void app_start(int, char **)

@@ -27,7 +27,7 @@
         // that's a mess... dont feel like patching the library
         document.body.innerHTML += '<color-picker width="' + vw + '" height="' + vw + '"></color-picker>';
 
-        var serviceUUID = "0000a000-0000-1000-8000-00805f9b34fb";
+        var serviceUUID = "00009866-0000-1000-8000-00805f9b34fb";
         var controlUUID = "0000a001-0000-1000-8000-00805f9b34fb";
 
         var colorEl = document.querySelector('color-picker');
@@ -42,7 +42,7 @@
         var ledChar = null;
         connectEl.addEventListener('click', () => {
             navigator.bluetooth.requestDevice({
-                filters: [{ services: [0xA000] }],
+                filters: [{ services: [0x9866] }],
                 optionalServices: [serviceUUID]
             })
             .then(device => device.connectGATT())
@@ -63,7 +63,7 @@
                 var rgb = e.detail.rgb;
                 ledChar.writeValue(new Uint8Array([rgb.b, rgb.g, rgb.r, 100]))
                 .catch(error => {
-                    log(error);
+                    // log(error);
                 });
             }
         });
