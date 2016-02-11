@@ -19,7 +19,7 @@
 
 class LEDService {
 public:
-    const static uint16_t LED_SERVICE_UUID              = 0xA000;
+    const static uint16_t LED_SERVICE_UUID              = 0x9866;
     const static uint16_t LED_STATE_CHARACTERISTIC_UUID = 0xA001;
 
     LEDService(BLEDevice &_ble, unsigned int initialValueForLEDCharacteristic) :

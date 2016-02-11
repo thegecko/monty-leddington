@@ -1,20 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>monty-leddington</title>
     <link rel="import" href="bower_components/color-picker-element/dist/color-picker.html">
     <style>
-        button { font-size: 150px; display: block; }
-        .hidden { display: none; }
+        html, body {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        button { font-size: calc(100vw / 5); display: block; margin: 20px auto; padding: 0 20px; }
+        color-picker { display: none; }
     </style>
 </head>
-<body>
-    <color-picker class="hidden" width="800" height="800"></color-picker>
+<body class="connection">
     <button id="connect">Connect</button>
     <div id="results"></div>
 
     <script>
-        var serviceUUID = "0000a000-0000-1000-8000-00805f9b34fb";
+        // this is needed by color-picker component unfortunately (does reflow)
+        var vw = window.innerWidth;
+        console.log(vw);
+        // so this thing reads its attributes when creating, not when adding to body
+        // that's a mess... dont feel like patching the library
+        document.body.innerHTML += '<color-picker width="' + vw + '" height="' + vw + '"></color-picker>';
+
+        var serviceUUID = "00009866-0000-1000-8000-00805f9b34fb";
         var controlUUID = "0000a001-0000-1000-8000-00805f9b34fb";
 
         var colorEl = document.querySelector('color-picker');
@@ -23,13 +36,13 @@
 
         function log(message) {
             console.log(message);
-            // resultsEl.innerText += message + "\n";
+            resultsEl.innerText += message + "\n";
         }
 
         var ledChar = null;
         connectEl.addEventListener('click', () => {
             navigator.bluetooth.requestDevice({
-                filters: [{ services: [0xA000] }],
+                filters: [{ services: [0x9866] }],
                 optionalServices: [serviceUUID]
             })
             .then(device => device.connectGATT())
@@ -37,8 +50,8 @@
             .then(service => service.getCharacteristic(controlUUID))
             .then(characteristic => {
                 ledChar = characteristic;
-                colorEl.className = "";
-                connectEl.className = "hidden";
+                colorEl.style.display = 'block';
+                connectEl.style.display = 'none';
             })
             .catch(error => {
                 log(error);
@@ -50,7 +63,7 @@
                 var rgb = e.detail.rgb;
                 ledChar.writeValue(new Uint8Array([rgb.b, rgb.g, rgb.r, 100]))
                 .catch(error => {
-                    log(error);
+                    // log(error);
                 });
             }
         });

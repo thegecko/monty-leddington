@@ -19,6 +19,7 @@
 #include "LEDService.h"
 #include "ws2812.h"
 #include "pixel-array.h"
+#include "eddystone/EddystoneService.h"
 
 #define WS2812_BUF 8
 
@@ -27,8 +28,14 @@ PixelArray px(WS2812_BUF);
 // The given numbers are for the K64F
 WS2812 ws(P0_2, WS2812_BUF);
 
-const static char     DEVICE_NAME[] = "LED";
-static const uint16_t uuid16_list[] = {LEDService::LED_SERVICE_UUID};
+// Eddystone URL
+static const char defaultUrl[] = "https://goo.gl/Vmoj51";
+// Normal name & services
+static char beaconName[] = "LED9";
+static uint16_t uuid16_list[] = { LEDService::LED_SERVICE_UUID };
+
+static const PowerLevels_t defaultAdvPowerLevels = {-47, -33, -21, -13};
+static const PowerLevels_t radioPowerLevels      = {-30, -16, -4, 4};
 
 LEDService *ledServicePtr;
 
@@ -83,16 +90,22 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params)
     ble.gap().onDisconnection(disconnectionCallback);
     ble.gattServer().onDataWritten(onDataWrittenCallback);
 
+    // Set up Eddystone
+    auto eddyServicePtr = new EddystoneService(ble, defaultAdvPowerLevels, radioPowerLevels, 0);
+    eddyServicePtr->setURLData(defaultUrl);
+    // The name of the beacon and the service list
+    eddyServicePtr->setNormalFrameData(beaconName, strlen(beaconName), uuid16_list, sizeof(uuid16_list));
+
+    // Every 500 ms. Eddystone URL, then Normal frame
+    eddyServicePtr->setUIDFrameAdvertisingInterval(0);
+    eddyServicePtr->setTLMFrameAdvertisingInterval(0);
+    eddyServicePtr->setURLFrameAdvertisingInterval(500);
+    eddyServicePtr->setNormalFrameAdvertisingInterval(500);
+
+    eddyServicePtr->startBeaconService();
+
     bool initialValueForLEDCharacteristic = false;
     ledServicePtr = new LEDService(ble, initialValueForLEDCharacteristic);
-
-    /* setup advertising */
-    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
-    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t *)uuid16_list, sizeof(uuid16_list));
-    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *)DEVICE_NAME, sizeof(DEVICE_NAME));
-    ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.gap().setAdvertisingInterval(1000); /* 1000ms. */
-    ble.gap().startAdvertising();
 }
 
 void app_start(int, char **)
