@@ -1,38 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>monty-leddington</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>monty-leddington</title>
     <link rel="import" href="bower_components/color-picker-element/dist/color-picker.html">
     <style>
-        html, body {
-            width: 100%;
-            padding: 0;
-            margin: 0;
-        }
-        button { font-size: calc(100vw / 5); display: block; margin: 20px auto; padding: 0 20px; }
-        color-picker { display: none; }
+        html, body { width: 100%; padding: 0; margin: 0; }
+        button { font-size: 50px; padding: 0 20px; display: block; margin: 20px auto; }
+        color-picker { display: none; margin: auto; }
+        #off { width: 250px; display: none; margin: 20px auto; }
     </style>
 </head>
-<body class="connection">
+<body>
     <button id="connect">Connect</button>
+    <div id="container"></div>
+    <button id="off">Off</button>
     <div id="results"></div>
 
     <script>
-        // this is needed by color-picker component unfortunately (does reflow)
-        var vw = window.innerWidth;
-        console.log(vw);
-        // so this thing reads its attributes when creating, not when adding to body
-        // that's a mess... dont feel like patching the library
-        document.body.innerHTML += '<color-picker width="' + vw + '" height="' + vw + '"></color-picker>';
-
         var serviceUUID = "00009866-0000-1000-8000-00805f9b34fb";
         var controlUUID = "0000a001-0000-1000-8000-00805f9b34fb";
 
-        var colorEl = document.querySelector('color-picker');
+        var size = Math.min(window.innerWidth, window.innerHeight);
         var connectEl = document.getElementById("connect");
+        var containerEl = document.getElementById("container");
+        var offEl = document.getElementById("off");
         var resultsEl = document.getElementById("results");
+
+        containerEl.innerHTML += '<color-picker width="' + size + '" height="' + size + '"></color-picker>';
+
+        var colorEl = document.querySelector("color-picker");
+        colorEl.style.width = size + "px";
 
         function log(message) {
             console.log(message);
@@ -40,28 +39,37 @@
         }
 
         var ledChar = null;
-        connectEl.addEventListener('click', () => {
+        connectEl.addEventListener("click", () => {
             navigator.bluetooth.requestDevice({
-                filters: [{ services: [0x9866] }],
-                optionalServices: [serviceUUID]
+                filters: [{ services: [serviceUUID] }]
             })
             .then(device => device.connectGATT())
             .then(server => server.getPrimaryService(serviceUUID))
             .then(service => service.getCharacteristic(controlUUID))
             .then(characteristic => {
                 ledChar = characteristic;
-                colorEl.style.display = 'block';
-                connectEl.style.display = 'none';
+                connectEl.style.display = "none";
+                colorEl.style.display = "block";
+                offEl.style.display = "block";
             })
             .catch(error => {
                 log(error);
             });
         });
 
-        colorEl.addEventListener('colorselected', e => {
+        colorEl.addEventListener("colorselected", e => {
             if (ledChar) {
                 var rgb = e.detail.rgb;
                 ledChar.writeValue(new Uint8Array([rgb.b, rgb.g, rgb.r, 100]))
+                .catch(error => {
+                    // log(error);
+                });
+            }
+        });
+
+        offEl.addEventListener("click", e => {
+            if (ledChar) {
+                ledChar.writeValue(new Uint8Array([0, 0, 0, 0]))
                 .catch(error => {
                     // log(error);
                 });

@@ -29,9 +29,9 @@ PixelArray px(WS2812_BUF);
 WS2812 ws(P0_2, WS2812_BUF);
 
 // Eddystone URL
-static const char defaultUrl[] = "https://goo.gl/Vmoj51";
+static const char defaultUrl[] = "https://mbed.com/s/led";
 // Normal name & services
-static char beaconName[] = "LED9";
+static char beaconName[] = "LED_1";
 static uint16_t uuid16_list[] = { LEDService::LED_SERVICE_UUID };
 
 static const PowerLevels_t defaultAdvPowerLevels = {-47, -33, -21, -13};
