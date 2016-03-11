@@ -43,7 +43,7 @@
             navigator.bluetooth.requestDevice({
                 filters: [{ services: [serviceUUID] }]
             })
-            .then(device => device.connectGATT())
+            .then(device => device.gatt.connect())
             .then(server => server.getPrimaryService(serviceUUID))
             .then(service => service.getCharacteristic(controlUUID))
             .then(characteristic => {
@@ -58,23 +58,36 @@
         });
 
         colorEl.addEventListener("colorselected", e => {
-            if (ledChar) {
-                var rgb = e.detail.rgb;
-                ledChar.writeValue(new Uint8Array([rgb.b, rgb.g, rgb.r, 100]))
-                .catch(error => {
-                    // log(error);
-                });
-            }
+            var rgb = e.detail.rgb;
+            setColour(rgb);
         });
 
         offEl.addEventListener("click", e => {
+            setColour({
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 0
+            });
+        });
+
+        function setColour(rgb, a) {
             if (ledChar) {
-                ledChar.writeValue(new Uint8Array([0, 0, 0, 0]))
+                rgb.a = rgb.a || 100;
+
+                var buffer = new ArrayBuffer(4);
+                var view = new DataView(buffer);
+                view.setUint8(0, rgb.b);
+                view.setUint8(1, rgb.g);
+                view.setUint8(2, rgb.r);
+                view.setUint8(3, rgb.a);
+
+                ledChar.writeValue(view)
                 .catch(error => {
                     // log(error);
                 });
             }
-        });
+        }
     </script>
 </body>
 </html>
