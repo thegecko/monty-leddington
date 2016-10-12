@@ -29,6 +29,7 @@
         var containerEl = document.getElementById("container");
         var offEl = document.getElementById("off");
         var resultsEl = document.getElementById("results");
+        var ledChar = null;
 
         containerEl.innerHTML += '<color-picker width="' + size + '" height="' + size + '"></color-picker>';
 
@@ -40,12 +41,12 @@
             resultsEl.innerText += message + "\n";
         }
 
-        var ledChar = null;
-        connectEl.addEventListener("click", () => {
-            navigator.bluetooth.requestDevice({
-                filters: [{ services: [serviceUUID] }]
-            })
-            .then(device => device.gatt.connect())
+        if (navigator.bluetooth.referringDevice) {
+            connect(navigator.bluetooth.referringDevice);
+        }
+
+        function connect(device) {
+            device.gatt.connect()
             .then(server => server.getPrimaryService(serviceUUID))
             .then(service => service.getCharacteristic(controlUUID))
             .then(characteristic => {
@@ -54,6 +55,16 @@
                 colorEl.style.display = "block";
                 offEl.style.display = "block";
             })
+            .catch(error => {
+                log(error);
+            });
+        }
+
+        connectEl.addEventListener("click", () => {
+            navigator.bluetooth.requestDevice({
+                filters: [{ services: [serviceUUID] }]
+            })
+            .then(device => connect(device))
             .catch(error => {
                 log(error);
             });
