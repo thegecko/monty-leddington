@@ -1,13 +1,15 @@
 {
   "name": "monty-leddington",
   "version": "1.0.0",
-  "description": "[https://thegecko.github.io/monty-leddington](https://thegecko.github.io/monty-leddington)",
-  "main": "app.js",
+  "description": "LED control via Web Bluetooth",
+  "homepage": "https://github.com/thegecko/monty-leddington#readme",
+  "author": "Rob Moran <github@thegecko.org>",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thegecko/monty-leddington.git"
   },
-  "devDependencies": {
-    "express": "^4.13.4"
+  "bugs": {
+    "url": "https://github.com/thegecko/monty-leddington/issues"
   }
 }

@@ -1,88 +1,91 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>monty-leddington</title>
+    <title>Monty Leddington</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <!-- Origin Trial Token, feature = Web Bluetooth, origin = https://thegecko.github.io, expires = 2016-11-03-->
-    <meta http-equiv="origin-trial" content="AjXpKVmFDQu9AWN9lkhuMlKAFY1HiQN25Ai+4++K8ZWIwAHMaoBoz7hma8WJJzJ0a2PHwv2HZMHyjuErB4DEJwsAAABdeyJvcmlnaW4iOiAiaHR0cHM6Ly90aGVnZWNrby5naXRodWIuaW86NDQzIiwgImZlYXR1cmUiOiAiV2ViQmx1ZXRvb3RoIiwgImV4cGlyeSI6IDE0NzgyMDYyMTd9" />
-    <link rel="import" href="bower_components/color-picker-element/dist/color-picker.html">
+
+    <link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Raleway:400,300,600' >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+    <link rel="stylesheet" href="assets/style.css">
+
     <style>
-        html, body { width: 100%; padding: 0; margin: 0; }
-        button { font-size: 50px; padding: 0 20px; display: block; margin: 20px auto; }
-        color-picker { display: none; margin: auto; }
-        #off { width: 250px; display: none; margin: 20px auto; }
+        .hidden {
+            display: none;            
+        }
+        .headerButton {
+            position: absolute;
+            top: 5px;
+            height: 28px;
+            line-height: 28px;            
+        }
+        #off {
+            left: 5px;
+        }
+        #disconnect {
+            right: 5px;
+            padding: 0 6px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
-    <button id="connect">Connect</button>
-    <div id="container"></div>
-    <button id="off">Off</button>
-    <div id="results"></div>
 
+    <h3>LED Control</h3>
+    <button id="disconnect" class="headerButton hidden">✕</button>
+    <button id="off" class="headerButton hidden">Off</button>
+    <canvas id="picker" class="hidden"></canvas>
+    <button id="connect">Locate LED</button>
+    <div id="results"></div>
+    <div id="loader" class="loader"></div>
+
+    <script type="text/javascript" src="assets/picker.js"></script>
     <script>
         var serviceUUID = "00009866-0000-1000-8000-00805f9b34fb";
         var controlUUID = "0000a001-0000-1000-8000-00805f9b34fb";
 
-        var size = Math.min(window.innerWidth, window.innerHeight);
-        var connectEl = document.getElementById("connect");
-        var containerEl = document.getElementById("container");
+        var disconnectEl = document.getElementById("disconnect");
         var offEl = document.getElementById("off");
+        var connectEl = document.getElementById("connect");
         var resultsEl = document.getElementById("results");
+        var loaderEl = document.getElementById("loader");
+
+        var pickerEl = new picker("picker");
+
+        var ledDevice = null;
         var ledChar = null;
-
-        containerEl.innerHTML += '<color-picker width="' + size + '" height="' + size + '"></color-picker>';
-
-        var colorEl = document.querySelector("color-picker");
-        colorEl.style.width = size + "px";
 
         function log(message) {
             console.log(message);
             resultsEl.innerText += message + "\n";
         }
 
-        if (navigator.bluetooth.referringDevice) {
-            connect(navigator.bluetooth.referringDevice);
+        function resizePicker() {
+            pickerEl.draw(window.innerWidth, window.innerHeight - pickerEl.canvas.offsetTop);
         }
 
         function connect(device) {
+            loaderEl.style.display = "block";
+
             device.gatt.connect()
             .then(server => server.getPrimaryService(serviceUUID))
             .then(service => service.getCharacteristic(controlUUID))
             .then(characteristic => {
+                ledDevice = device;
                 ledChar = characteristic;
-                connectEl.style.display = "none";
-                colorEl.style.display = "block";
+
+                disconnectEl.style.display = "block";
                 offEl.style.display = "block";
+                pickerEl.canvas.style.display = "block";
+                connectEl.style.display = "none";
+                loaderEl.style.display = "none";
             })
             .catch(error => {
+                loaderEl.style.display = "none";
                 log(error);
             });
         }
-
-        connectEl.addEventListener("click", () => {
-            navigator.bluetooth.requestDevice({
-                filters: [{ services: [serviceUUID] }]
-            })
-            .then(device => connect(device))
-            .catch(error => {
-                log(error);
-            });
-        });
-
-        colorEl.addEventListener("colorselected", e => {
-            var rgb = e.detail.rgb;
-            setColour(rgb);
-        });
-
-        offEl.addEventListener("click", e => {
-            setColour({
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 0
-            });
-        });
 
         function setColour(rgb) {
             if (ledChar) {
@@ -101,6 +104,49 @@
                 });
             }
         }
+
+        connectEl.addEventListener("click", () => {
+            navigator.bluetooth.requestDevice({
+                filters: [{ services: [serviceUUID] }]
+            })
+            .then(device => connect(device))
+            .catch(error => {
+                log(error);
+            });
+        });
+
+        disconnectEl.addEventListener("click", () => {
+            if (ledDevice) {
+                if (ledDevice.gatt) ledDevice.gatt.disconnect();
+                ledDevice = null;
+            }
+
+            disconnectEl.style.display = "none";
+            offEl.style.display = "none";
+            pickerEl.canvas.style.display = "none";
+            connectEl.style.display = "block";
+        });
+
+        pickerEl.canvas.addEventListener("colorselected", e => {
+            setColour(e.detail);
+        });
+
+        offEl.addEventListener("click", e => {
+            setColour({
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 0
+            });
+        });
+
+        window.addEventListener("resize", resizePicker);
+        document.addEventListener("DOMContentLoaded", resizePicker);
+
+        if (navigator.bluetooth.referringDevice) {
+            connect(navigator.bluetooth.referringDevice);
+        }
     </script>
+
 </body>
 </html>
